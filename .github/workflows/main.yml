@@ -1,0 +1,51 @@
+name: Deploy Aether OS to Pages
+
+on:
+  push:
+    branches: ["main"] # Triggers deployment when you push to main
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps: deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-index: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Tests (Ensure All 40 Pass Before Deploying)
+        run: npm run test run
+
+      - name: Build Production Bundle
+        run: npm run build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload Production Artifacts
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist' # Vite outputs production build here
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

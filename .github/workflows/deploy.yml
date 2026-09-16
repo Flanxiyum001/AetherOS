@@ -42,7 +42,11 @@ jobs:
         run: bun run build
 
       - name: Setup Pages
+        # enablement: true flips Pages on for the repo (Source: GitHub Actions)
+        # on first deploy — no manual Settings → Pages step needed.
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Upload production artifact
         uses: actions/upload-pages-artifact@v3

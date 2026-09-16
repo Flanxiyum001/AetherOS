@@ -4,7 +4,6 @@ A **serverless, peer-to-peer operating system in your browser**. No accounts, no
 backend, no hosting bills — everything flows directly between browsers over
 WebRTC data channels.
 
-**Built by [Pourush Nair](https://github.com/Flanxiyum001).**
 
 ## What it does
 

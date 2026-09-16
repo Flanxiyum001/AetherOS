@@ -36,9 +36,10 @@ jobs:
         run: bun run test
 
       - name: Build production bundle
-        # Repo lives at Flanxiyum001/Aether → Pages serves it under /Aether/
+        # Pages serves project sites under /<repo-name>/ — derive it from the
+        # repo so asset paths always match, even after a rename.
         env:
-          VITE_BASE: /Aether/
+          VITE_BASE: /${{ github.event.repository.name }}/
         run: bun run build
 
       - name: Setup Pages

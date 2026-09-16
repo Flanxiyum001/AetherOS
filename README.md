@@ -59,10 +59,11 @@ One-time enablement in the GitHub UI:
    **GitHub Actions**.
 2. Push to `main` (or use the *Run workflow* button on the Actions tab).
 
-Live URL: `https://<username>.github.io/Aether/`
+Live URL: `https://<username>.github.io/AetherOS/`
 
-The build sets `VITE_BASE=/Aether/` so asset paths match the Pages URL. If you
-rename the repo, update that value in `deploy.yml`.
+The build sets `VITE_BASE=/AetherOS/` (derived from the repo name in
+`deploy.yml`) so asset paths match the Pages URL. If you rename the repo, the
+workflow picks up the new name automatically.
 
 ## Architecture
 

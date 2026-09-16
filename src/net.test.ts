@@ -201,7 +201,7 @@ describe('file streaming', () => {
     for (const h of action('dblob').handlers) {
       h(payload, 'peerA', {fileId: 'f9', name: 'song.mp3'})
       // let the async persistence handler finish (IDB settles on macrotasks)
-      await new Promise(r => setTimeout(r, 5))
+      await flushAsync()
     }
     const {getFile} = await import('./drive')
     const rec = await getFile('f9')
@@ -215,8 +215,8 @@ describe('file streaming', () => {
     await putFile(rec)
     for (const h of action('dreq').handlers) {
       h({fileId: rec.id}, 'peerA')
-      // let the async handler run
-      await new Promise(r => setTimeout(r, 0))
+      // let the async handler run (IDB read settles on macrotasks)
+      await flushAsync()
     }
     const sends = action('dblob').send.mock.calls
     expect(sends).toHaveLength(1)

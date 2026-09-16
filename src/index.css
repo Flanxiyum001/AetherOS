@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --aether-bg: #050810;
+  --aether-glow: #22d3ee;
+  --aether-glow2: #a78bfa;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background: var(--aether-bg);
+  color: #e2e8f0;
+  font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', ui-monospace, monospace;
+  overflow: hidden;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1e293b transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+
+@keyframes aether-scan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+.scanline::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(transparent 95%, rgba(34, 211, 238, 0.06) 100%);
+  animation: aether-scan 8s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes aether-grid {
+  from { background-position: 0 0; }
+  to { background-position: 40px 40px; }
+}
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(34, 211, 238, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34, 211, 238, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+  animation: aether-grid 60s linear infinite;
+}
+
+.glow-text {
+  text-shadow: 0 0 12px rgba(34, 211, 238, 0.6);
+}

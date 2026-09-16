@@ -9,14 +9,18 @@ import {nanoid} from 'nanoid'
 import {useOS, type ChatMessage, type DriveFileMeta} from './store'
 import {getFile, putFile, deleteFile, listFiles, makeFileMeta} from './drive'
 
-// Hand-picked high-uptime public relays layered on top of Trystero's
-// built-in default list. Redundancy = faster first-peer connection.
+// Hand-tested Nostr signaling relays (checked for browser WebSocket access
+// from the Pages origin). Trystero retries any dead one with backoff — noise
+// in the console but harmless — while a single healthy relay is enough for
+// peers to find each other. mutinywallet (defunct), damus and nos.lol (403
+// for some networks) were removed; primal/band/snort/offchain/wellorder were
+// all verified 101-switching-protocols or 200 on the upgrade handshake.
 const RELAYS = [
-  'wss://relay.damus.io',
-  'wss://nos.lol',
   'wss://relay.primal.net',
-  'wss://nostr.mutinywallet.com',
   'wss://relay.nostr.band',
+  'wss://relay.snort.social',
+  'wss://offchain.pub',
+  'wss://nostr-pub.wellorder.net',
 ]
 const config = {appId: 'aether-os-p2p', relayUrls: RELAYS}
 

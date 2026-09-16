@@ -15,6 +15,12 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   monitor: MonitorApp,
 }
 
+const GLYPH = {
+  close: 'M4 4 L10 10 M10 4 L4 10',
+  min: 'M3.5 7 H10.5',
+  max: 'M4.5 4.5 h4.5 a0.9 0.9 0 0 1 0.9 0.9 v4.5 a0.9 0.9 0 0 1 -0.9 0.9 h-4.5 a0.9 0.9 0 0 1 -0.9 -0.9 v-4.5 a0.9 0.9 0 0 1 0.9 -0.9 z',
+}
+
 export default function Window({win, app}: {win: WindowState; app: string}) {
   const focusWindow = useOS(s => s.focusWindow)
   const closeWindow = useOS(s => s.closeWindow)
@@ -36,7 +42,7 @@ export default function Window({win, app}: {win: WindowState; app: string}) {
       moveWindow(
         win.id,
         Math.max(0, Math.min(window.innerWidth - 100, ev.clientX - dragRef.current.dx)),
-        Math.max(36, Math.min(window.innerHeight - 60, ev.clientY - dragRef.current.dy))
+        Math.max(28, Math.min(window.innerHeight - 60, ev.clientY - dragRef.current.dy))
       )
     }
     const onUp = () => {
@@ -71,7 +77,7 @@ export default function Window({win, app}: {win: WindowState; app: string}) {
   }
 
   const style = win.maximized
-    ? {left: 0, top: 36, width: '100vw', height: 'calc(100vh - 36px - 64px)', zIndex: win.z}
+    ? {left: 0, top: 28, width: '100vw', height: 'calc(100vh - 28px - 74px)', zIndex: win.z}
     : {left: win.x, top: win.y, width: win.w, height: win.h, zIndex: win.z}
 
   return (
@@ -82,44 +88,63 @@ export default function Window({win, app}: {win: WindowState; app: string}) {
       transition={{duration: 0.15}}
       style={style}
       onMouseDown={() => focusWindow(win.id)}
-      className="absolute flex flex-col overflow-hidden rounded-xl border border-cyan-500/25 bg-[#0a1220]/95 shadow-[0_8px_50px_rgba(0,0,0,0.6)] backdrop-blur"
+      className="mac-window absolute flex flex-col overflow-hidden bg-white/95 backdrop-blur-xl"
     >
       {/* title bar */}
       <div
         onMouseDown={onTitleBarMouseDown}
         onDoubleClick={() => toggleMaximize(win.id)}
-        className="flex h-9 shrink-0 cursor-grab select-none items-center gap-2 border-b border-cyan-500/15 bg-[#0c1526] px-3 active:cursor-grabbing"
+        className="relative flex h-[38px] shrink-0 cursor-grab select-none items-center border-b border-black/[0.07] bg-[#f6f6f6]/95 px-3 active:cursor-grabbing"
       >
-        <button
-          onClick={e => {
-            e.stopPropagation()
-            closeWindow(win.id)
-          }}
-          className="h-3 w-3 rounded-full bg-red-500/80 transition hover:bg-red-400"
-          aria-label="close"
-        />
-        <button
-          onClick={e => {
-            e.stopPropagation()
-            toggleMinimize(win.id)
-          }}
-          className="h-3 w-3 rounded-full bg-yellow-500/80 transition hover:bg-yellow-400"
-          aria-label="minimize"
-        />
-        <button
-          onClick={e => {
-            e.stopPropagation()
-            toggleMaximize(win.id)
-          }}
-          className="h-3 w-3 rounded-full bg-green-500/80 transition hover:bg-green-400"
-          aria-label="maximize"
-        />
-        <span className="ml-2 truncate text-xs font-semibold tracking-wide text-slate-300">
-          {win.title}
-        </span>
+        {/* traffic lights */}
+        <div className="traffic-group flex items-center gap-2">
+          <button
+            onClick={e => {
+              e.stopPropagation()
+              closeWindow(win.id)
+            }}
+            className="traffic bg-[#ff5f57]"
+            aria-label="close"
+          >
+            <svg width="12" height="12" viewBox="0 0 14 14">
+              <path d={GLYPH.close} stroke="rgba(0,0,0,0.55)" strokeWidth="1.4" fill="none" />
+            </svg>
+          </button>
+          <button
+            onClick={e => {
+              e.stopPropagation()
+              toggleMinimize(win.id)
+            }}
+            className="traffic bg-[#febc2e]"
+            aria-label="minimize"
+          >
+            <svg width="12" height="12" viewBox="0 0 14 14">
+              <path d={GLYPH.min} stroke="rgba(0,0,0,0.55)" strokeWidth="1.4" fill="none" />
+            </svg>
+          </button>
+          <button
+            onClick={e => {
+              e.stopPropagation()
+              toggleMaximize(win.id)
+            }}
+            className="traffic bg-[#28c840]"
+            aria-label="maximize"
+          >
+            <svg width="12" height="12" viewBox="0 0 14 14">
+              <path d={GLYPH.max} stroke="rgba(0,0,0,0.55)" strokeWidth="1.4" fill="none" />
+            </svg>
+          </button>
+        </div>
+
+        {/* centered title */}
+        <div className="pointer-events-none absolute inset-x-0 flex justify-center">
+          <span className="truncate px-6 text-[13px] font-semibold text-black/70">
+            {win.title}
+          </span>
+        </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto">
+      <div className="min-h-0 flex-1 overflow-auto bg-white">
         <Comp />
       </div>
 

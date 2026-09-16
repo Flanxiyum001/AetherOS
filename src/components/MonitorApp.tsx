@@ -10,7 +10,7 @@ export default function MonitorApp() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rafRef = useRef(0)
 
-  // ambient oscilloscope
+  // ambient oscilloscope (mac-friendly teal on light canvas)
   useEffect(() => {
     const ctx = canvasRef.current?.getContext('2d')
     if (!ctx) return
@@ -18,9 +18,10 @@ export default function MonitorApp() {
     const draw = () => {
       const w = canvasRef.current!.width
       const h = canvasRef.current!.height
-      ctx.fillStyle = '#040a12'
+      ctx.clearRect(0, 0, w, h)
+      ctx.fillStyle = '#f6f6f6'
       ctx.fillRect(0, 0, w, h)
-      ctx.strokeStyle = '#22d3ee'
+      ctx.strokeStyle = '#0a84ff'
       ctx.lineWidth = 1.5
       ctx.beginPath()
       for (let x = 0; x < w; x++) {
@@ -39,44 +40,44 @@ export default function MonitorApp() {
   }, [peers])
 
   return (
-    <div className="space-y-3 p-3 text-xs">
-      <canvas ref={canvasRef} width={480} height={80} className="w-full rounded border border-cyan-500/20" />
+    <div className="space-y-3 p-3 text-[12px]">
+      <canvas
+        ref={canvasRef}
+        width={480}
+        height={80}
+        className="w-full rounded-[10px] border border-black/[0.08]"
+      />
 
       <div className="grid grid-cols-2 gap-2">
-        <Stat label="room" value={room ?? '—'} />
-        <Stat label="you" value={`${myId().slice(0, 10)}`} />
-        <Stat label="peers" value={String(Object.keys(peers).length)} />
-        <Stat label="drive entries" value={String(files.length)} />
+        <Stat label="Room" value={room ?? '—'} />
+        <Stat label="You" value={`${myId().slice(0, 10)}`} />
+        <Stat label="Peers" value={String(Object.keys(peers).length)} />
+        <Stat label="Drive entries" value={String(files.length)} />
         <Stat
-          label="transfers"
+          label="Transfers"
           value={`${transfers.filter(t => t.status === 'transferring').length} active`}
         />
-        <Stat
-          label="bytes moved"
-          value={formatTotal(transfers)}
-        />
+        <Stat label="Bytes moved" value={formatTotal(transfers)} />
       </div>
 
       <div>
-        <div className="mb-1 text-[10px] uppercase tracking-widest text-slate-500">
-          connected peers
+        <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-black/40">
+          Connected peers
         </div>
         {Object.keys(peers).length === 0 ? (
-          <p className="text-slate-600">no peers yet — share the room code</p>
+          <p className="text-black/35">No peers yet — share the room code</p>
         ) : (
           <div className="space-y-1">
             {Object.values(peers).map(p => (
               <div
                 key={p.id}
-                className="flex items-center justify-between rounded border border-slate-800 bg-[#0b1424] px-2 py-1.5"
+                className="flex items-center justify-between rounded-[10px] border border-black/[0.06] bg-[#f6f6f6]/80 px-2.5 py-1.5"
               >
-                <span className="text-slate-300">
-                  <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+                <span className="text-black/80">
+                  <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
                   {p.name}
                 </span>
-                <span className="text-slate-500">
-                  {p.id.slice(0, 8)}
-                </span>
+                <span className="text-black/40">{p.id.slice(0, 8)}</span>
               </div>
             ))}
           </div>
@@ -88,9 +89,11 @@ export default function MonitorApp() {
 
 function Stat({label, value}: {label: string; value: string}) {
   return (
-    <div className="rounded border border-slate-800 bg-[#0b1424] px-2 py-1.5">
-      <div className="text-[9px] uppercase tracking-widest text-slate-500">{label}</div>
-      <div className="truncate text-cyan-200">{value}</div>
+    <div className="rounded-[10px] border border-black/[0.06] bg-[#f6f6f6]/80 px-2.5 py-1.5">
+      <div className="text-[10px] font-medium uppercase tracking-wider text-black/40">
+        {label}
+      </div>
+      <div className="truncate font-medium text-black/80">{value}</div>
     </div>
   )
 }

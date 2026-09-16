@@ -8,23 +8,23 @@ export default function TransferHud() {
   if (transfers.length === 0) return null
 
   return (
-    <div className="absolute bottom-20 right-4 z-[9997] w-72 space-y-2">
+    <div className="absolute bottom-[86px] right-4 z-[9997] w-72 space-y-2">
       {transfers.slice(-4).map(t => (
         <div
           key={t.id}
-          className="rounded-lg border border-cyan-500/20 bg-[#0a1220]/95 p-2.5 text-[11px] backdrop-blur"
+          className="glass rounded-[12px] p-2.5 text-[11px] shadow-[0_8px_28px_rgba(0,0,0,0.14)]"
         >
           <div className="mb-1 flex items-center justify-between gap-2">
-            <span className="truncate text-slate-300">
+            <span className="truncate font-medium text-black/80">
               {t.direction === 'send' ? '▲' : '▼'} {t.fileName}
             </span>
             <span
               className={
                 t.status === 'done'
-                  ? 'text-emerald-400'
+                  ? 'text-emerald-500'
                   : t.status === 'failed'
-                  ? 'text-red-400'
-                  : 'text-cyan-300'
+                  ? 'text-red-500'
+                  : 'text-[var(--mac-accent)]'
               }
             >
               {t.status === 'done'
@@ -34,15 +34,19 @@ export default function TransferHud() {
                 : `${Math.round(t.progress * 100)}%`}
             </span>
           </div>
-          <div className="h-1 overflow-hidden rounded bg-slate-800">
+          <div className="h-1 overflow-hidden rounded-full bg-black/10">
             <div
-              className={`h-full transition-all ${
-                t.status === 'failed' ? 'bg-red-400' : 'bg-cyan-400'
+              className={`h-full rounded-full transition-all ${
+                t.status === 'failed'
+                  ? 'bg-red-500'
+                  : t.status === 'done'
+                  ? 'bg-emerald-500'
+                  : 'bg-[var(--mac-accent)]'
               }`}
               style={{width: `${Math.round(t.progress * 100)}%`}}
             />
           </div>
-          <div className="mt-1 flex justify-between text-slate-500">
+          <div className="mt-1 flex justify-between text-black/45">
             <span>
               {t.direction === 'send' ? 'to' : 'from'} {t.peerName}
             </span>
@@ -53,9 +57,9 @@ export default function TransferHud() {
       {transfers.some(t => t.status === 'done' || t.status === 'failed') && (
         <button
           onClick={clearFinished}
-          className="w-full rounded border border-slate-700 py-1 text-[10px] text-slate-400 transition hover:bg-slate-800/60"
+          className="glass mac-press w-full rounded-[10px] py-1 text-[10.5px] font-medium text-black/55 transition hover:text-black/80"
         >
-          clear finished
+          Clear finished
         </button>
       )}
     </div>

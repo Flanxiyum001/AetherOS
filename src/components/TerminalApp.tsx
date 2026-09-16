@@ -95,7 +95,7 @@ export default function TerminalApp() {
   }
 
   return (
-    <div className="flex h-full flex-col bg-[#040a12] font-mono text-[13px]">
+    <div className="flex h-full flex-col bg-[#1e1e1e] font-mono text-[13px]">
       <div className="min-h-0 flex-1 overflow-auto p-3 leading-relaxed">
         {lines.map((l, i) => (
           <div
@@ -104,8 +104,8 @@ export default function TerminalApp() {
               l.kind === 'err'
                 ? 'text-red-400'
                 : l.kind === 'in'
-                ? 'text-cyan-300'
-                : 'text-slate-400'
+                ? 'text-[#7ee787]'
+                : 'text-[#d4d4d4]'
             }
           >
             <pre className="whitespace-pre-wrap">{l.text}</pre>
@@ -113,13 +113,16 @@ export default function TerminalApp() {
         ))}
         <div ref={bottomRef} />
       </div>
-      <form onSubmit={submit} className="flex items-center gap-2 border-t border-slate-800 px-3 py-2">
-        <span className="text-cyan-400">λ</span>
+      <form
+        onSubmit={submit}
+        className="flex items-center gap-2 border-t border-white/10 px-3 py-2"
+      >
+        <span className="font-mono text-[#7ee787]">❯</span>
         <input
           autoFocus
           value={input}
           onChange={e => setInput(e.target.value)}
-          className="w-full bg-transparent text-cyan-100 outline-none"
+          className="w-full bg-transparent font-mono text-[13px] text-[#e6e6e6] outline-none placeholder:text-[#777]"
         />
       </form>
     </div>

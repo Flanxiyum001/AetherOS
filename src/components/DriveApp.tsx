@@ -31,8 +31,8 @@ export default function DriveApp() {
 
   return (
     <div
-      className={`flex h-full flex-col ${
-        dragOver ? 'bg-cyan-500/10' : ''
+      className={`flex h-full flex-col bg-white transition-colors ${
+        dragOver ? 'bg-[var(--mac-accent)]/[0.06]' : ''
       }`}
       onDragOver={e => {
         e.preventDefault()
@@ -47,10 +47,9 @@ export default function DriveApp() {
     >
       <div
         onClick={() => inputRef.current?.click()}
-        className="m-3 cursor-pointer rounded-lg border-2 border-dashed border-cyan-500/30 p-5 text-center text-xs text-slate-500 transition hover:border-cyan-400/60 hover:text-cyan-300"
+        className="m-3 cursor-pointer rounded-[10px] border-2 border-dashed border-black/15 p-5 text-center text-[12px] text-black/45 transition hover:border-[var(--mac-accent)]/50 hover:text-[var(--mac-accent)]"
       >
-        ⬇ drop files here or click to add — they stay on this machine until
-        streamed
+        Drop files here or click to add — they stay on this machine until streamed
         <input
           ref={inputRef}
           type="file"
@@ -65,23 +64,23 @@ export default function DriveApp() {
 
       <div className="min-h-0 flex-1 overflow-auto px-3 pb-3">
         {files.length === 0 && (
-          <p className="py-8 text-center text-xs text-slate-600">
-            the shared drive is empty
+          <p className="py-8 text-center text-[12px] text-black/35">
+            The shared drive is empty
           </p>
         )}
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {files.map(f => (
             <div
               key={f.id}
-              className="flex items-center gap-3 rounded-lg border border-slate-800 bg-[#0b1424] px-3 py-2 text-xs"
+              className="flex items-center gap-3 rounded-[10px] border border-black/[0.06] bg-[#f6f6f6]/80 px-3 py-2 text-[12px] transition hover:bg-[#f0f0f2]"
             >
-              <span className="text-lg">
+              <span className="text-[20px]">
                 {f.mime.startsWith('image') ? '🖼' : f.mime.startsWith('video') ? '🎬' : f.mime.startsWith('audio') ? '🎵' : '📄'}
               </span>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-slate-200">{f.name}</div>
-                <div className="text-[10px] text-slate-500">
-                  {formatSize(f.size)} · by {f.addedByName}
+                <div className="truncate font-medium text-black/85">{f.name}</div>
+                <div className="text-[10.5px] text-black/40">
+                  {formatSize(f.size)} · {f.addedByName}
                 </div>
               </div>
               <div className="flex shrink-0 gap-1">
@@ -120,22 +119,22 @@ function LocalAwareButton({
             a.click()
             URL.revokeObjectURL(url)
           }}
-          className="rounded border border-emerald-500/40 px-2 py-1 text-emerald-300 transition hover:bg-emerald-500/10"
+          className="mac-press rounded-md border border-black/10 bg-white px-2 py-1 text-[11px] font-medium text-emerald-600 transition hover:bg-emerald-50"
         >
-          save
+          Save
         </button>
         <button
           onClick={() => void shareFile(fileId)}
-          className="rounded border border-cyan-500/40 px-2 py-1 text-cyan-300 transition hover:bg-cyan-500/10"
+          className="mac-press rounded-md border border-black/10 bg-white px-2 py-1 text-[11px] font-medium text-[var(--mac-accent)] transition hover:bg-blue-50"
         >
-          push
+          Push
         </button>
         {addedBy === selfId && (
           <button
             onClick={() => removeSharedFile(fileId)}
-            className="rounded border border-red-500/40 px-2 py-1 text-red-300 transition hover:bg-red-500/10"
+            className="mac-press rounded-md border border-black/10 bg-white px-2 py-1 text-[11px] font-medium text-red-500 transition hover:bg-red-50"
           >
-            del
+            Delete
           </button>
         )}
       </span>
@@ -145,9 +144,9 @@ function LocalAwareButton({
   return (
     <button
       onClick={() => requestFile(fileId)}
-      className="rounded border border-violet-500/40 px-2 py-1 text-violet-300 transition hover:bg-violet-500/10"
+      className="mac-press rounded-md border border-black/10 bg-white px-2 py-1 text-[11px] font-medium text-violet-600 transition hover:bg-violet-50"
     >
-      fetch
+      Fetch
     </button>
   )
 }

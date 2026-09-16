@@ -20,51 +20,57 @@ export default function Desktop() {
 
   return (
     <div
-      className="grid-bg relative h-full w-full overflow-hidden bg-[#050810]"
+      className="mac-wallpaper relative h-full w-full overflow-hidden"
       onDragOver={e => e.preventDefault()}
     >
-      {/* top menu bar */}
-      <div className="absolute inset-x-0 top-0 z-[9999] flex h-9 items-center gap-4 border-b border-cyan-500/15 bg-[#070d1a]/90 px-4 text-xs text-slate-300 backdrop-blur">
-        <span className="font-bold tracking-widest text-cyan-300">◈ AETHER</span>
-        <span className="text-slate-500">room:{roomId}</span>
-        <span className="text-slate-500">
-          {selfName} · {Object.keys(peers).length + 1} online
-        </span>
+      {/* ---- menu bar ---- */}
+      <div className="glass absolute inset-x-0 top-0 z-[9999] flex h-7 items-center gap-3 border-x-0 border-t-0 px-3 text-[13px] text-black/80">
+        <span className="px-1.5 leading-none hover:rounded hover:bg-black/5"></span>
+        <span className="font-semibold px-1.5 hover:rounded hover:bg-black/5">{roomId}</span>
+        <span className="px-1.5 hover:rounded hover:bg-black/5">File</span>
+        <span className="px-1.5 hover:rounded hover:bg-black/5">Edit</span>
+        <span className="px-1.5 hover:rounded hover:bg-black/5">View</span>
+        <span className="px-1.5 hover:rounded hover:bg-black/5">Go</span>
+        <span className="px-1.5 hover:rounded hover:bg-black/5">Window</span>
         <div className="flex-1" />
-        <span className="tabular-nums text-slate-400">
-          {clock.toLocaleTimeString()}
-        </span>
+        <span className="tabular-nums text-black/60">{Object.keys(peers).length + 1} online</span>
+        <span className="max-w-[160px] truncate text-black/60">{selfName}</span>
         <button
+          title="Leave room"
           onClick={() => {
             disconnect()
             useOS.getState().setRoomId(null)
           }}
-          className="rounded border border-slate-700 px-2 py-0.5 text-slate-400 transition hover:border-red-500/40 hover:text-red-300"
+          className="rounded px-1.5 py-0.5 hover:bg-black/5"
         >
-          eject
+          ⏏
         </button>
+        <span className="tabular-nums">
+          {clock.toLocaleDateString([], {weekday: 'short', day: 'numeric', month: 'short'})}{' '}
+          {clock.toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'})}
+        </span>
       </div>
 
-      {/* desktop icons */}
-      <div className="absolute left-4 top-14 flex flex-col gap-3">
+      {/* ---- desktop icons (right side, like mac drive icons) ---- */}
+      <div className="absolute right-4 top-10 flex flex-col gap-1">
         {APPS.map(app => (
           <button
             key={app.id}
-            onDoubleClick={() => useOS.getState().openApp(app.id)}
             onClick={() => useOS.getState().openApp(app.id)}
-            className="group flex w-20 flex-col items-center gap-1 rounded-lg p-2 text-center transition hover:bg-cyan-500/10"
+            onDoubleClick={() => useOS.getState().openApp(app.id)}
+            className="group flex w-20 flex-col items-center gap-0.5 rounded-lg px-1 py-1.5 hover:bg-white/40"
           >
-            <span className="text-3xl transition group-hover:scale-110">
+            <span className="text-[28px] drop-shadow-sm transition group-hover:scale-105">
               {app.icon}
             </span>
-            <span className="text-[11px] text-slate-400 group-hover:text-cyan-200">
+            <span className="rounded px-1 text-[11px] leading-tight text-black/80 group-hover:bg-[var(--mac-accent)] group-hover:text-white">
               {app.label}
             </span>
           </button>
         ))}
       </div>
 
-      {/* windows */}
+      {/* ---- windows ---- */}
       <AnimatePresence>
         {windows
           .filter(w => !w.minimized)

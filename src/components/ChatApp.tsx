@@ -2,6 +2,8 @@ import {FormEvent, useEffect, useRef, useState} from 'react'
 import {useOS} from '../store'
 import {sendChatMessage, renameSelf, sendChatAttachment, requestFile} from '../net'
 import {getFile} from '../drive'
+import {playMessageSent, playMessageRecv, playTick} from '../sound'
+import VoiceNote from './VoiceNote'
 
 const EMOJI = [
   '😀','😂','🥹','😍','😎','🤔','😴','🥳','😭','😡',
@@ -14,21 +16,80 @@ export default function ChatApp() {
   const messages = useOS(s => s.messages)
   const selfName = useOS(s => s.selfName)
   const selfId = useOS(s => s.selfId)
+  const selfAvatar = useOS(s => s.selfAvatar)
+  const peers = useOS(s => s.peers)
   const [text, setText] = useState('')
   const [showEmoji, setShowEmoji] = useState(false)
+  const [recording, setRecording] = useState(false)
+  const [recSecs, setRecSecs] = useState(0)
   const fileRef = useRef<HTMLInputElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const recorderRef = useRef<MediaRecorder | null>(null)
+  const chunksRef = useRef<Blob[]>([])
+  const lastCount = useRef(0)
 
+  // incoming-message sound
   useEffect(() => {
+    if (messages.length > lastCount.current) {
+      const last = messages[messages.length - 1]
+      if (last && last.author !== selfId && last.author !== 'system') playMessageRecv()
+    }
+    lastCount.current = messages.length
     bottomRef.current?.scrollIntoView({behavior: 'smooth'})
-  }, [messages.length])
+  }, [messages.length, messages, selfId])
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
     if (!text.trim()) return
     sendChatMessage(text.trim())
     setText('')
+    playMessageSent()
   }
+
+  // ---- voice recording ----
+  const startRec = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({audio: true})
+      const mr = new MediaRecorder(stream)
+      chunksRef.current = []
+      mr.ondataavailable = ev => chunksRef.current.push(ev.data)
+      mr.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop())
+        const blob = new Blob(chunksRef.current, {type: 'audio/webm'})
+        if (blob.size > 800) {
+          const ext = blob.type.includes('ogg') ? 'ogg' : 'webm'
+          const file = new File([blob], `voice-${Date.now()}.${ext}`, {type: blob.type})
+          await sendChatAttachment(file, '')
+        }
+      }
+      mr.start()
+      recorderRef.current = mr
+      setRecording(true)
+      setRecSecs(0)
+      playTick()
+    } catch {
+      // mic denied or unavailable
+    }
+  }
+
+  const stopRec = (send: boolean) => {
+    const mr = recorderRef.current
+    if (!mr) return
+    if (!send) mr.onstop = () => {
+      mr.stream.getTracks().forEach(t => t.stop())
+    }
+    mr.stop()
+    recorderRef.current = null
+    setRecording(false)
+    playTick()
+  }
+
+  // recording timer
+  useEffect(() => {
+    if (!recording) return
+    const iv = setInterval(() => setRecSecs(s => s + 1), 1000)
+    return () => clearInterval(iv)
+  }, [recording])
 
   const onPickFile = (f: File | undefined | null) => {
     if (!f) return
@@ -52,7 +113,12 @@ export default function ChatApp() {
           // compare peer ids — handles can collide or change mid-session
           const mine = m.author === selfId
           return (
-            <div key={m.id} className={`flex ${mine ? 'justify-end' : ''}`}>
+            <div key={m.id} className={`flex items-end gap-1.5 ${mine ? 'justify-end' : ''}`}>
+              {!mine && (
+                <span className="shrink-0 text-[15px] leading-none opacity-90" title={m.authorName}>
+                  {peers[m.author]?.avatar ?? '👤'}
+                </span>
+              )}
               <div
                 className={`max-w-[80%] rounded-[16px] px-3 py-1.5 text-[13px] leading-snug ${
                   mine
@@ -65,9 +131,20 @@ export default function ChatApp() {
                     {m.authorName}
                   </div>
                 )}
-                {m.attachment && <MediaAttachment att={m.attachment} mine={mine} />}
+                {m.attachment &&
+                  (m.attachment.mime.startsWith('audio/') &&
+                  m.attachment.name.startsWith('voice-') ? (
+                    <VoiceNote fileId={m.attachment.fileId} mine={mine} />
+                  ) : (
+                    <MediaAttachment att={m.attachment} mine={mine} />
+                  ))}
                 {m.text}
               </div>
+              {mine && (
+                <span className="shrink-0 text-[15px] leading-none opacity-90" title={selfName}>
+                  {selfAvatar}
+                </span>
+              )}
             </div>
           )
         })}
@@ -109,6 +186,39 @@ export default function ChatApp() {
         >
           📎
         </button>
+        {recording ? (
+          <div className="flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-red-500/10 px-2.5">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+            <span className="text-[12px] tabular-nums text-red-500">
+              {Math.floor(recSecs / 60)}:{String(recSecs % 60).padStart(2, '0')}
+            </span>
+            <button
+              type="button"
+              title="Send"
+              onClick={() => stopRec(true)}
+              className="mac-press flex h-6 w-6 items-center justify-center rounded-full bg-[var(--mac-accent)] text-[11px] text-white"
+            >
+              ➤
+            </button>
+            <button
+              type="button"
+              title="Cancel"
+              onClick={() => stopRec(false)}
+              className="mac-press flex h-6 w-6 items-center justify-center rounded-full bg-black/10 text-[11px] text-black/60 dark:bg-white/15 dark:text-white/70"
+            >
+              ✕
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            title="Record voice message"
+            onClick={() => void startRec()}
+            className="mac-press flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[16px] transition hover:bg-black/10 dark:hover:bg-white/15"
+          >
+            🎙️
+          </button>
+        )}
         <input
           value={text}
           onChange={e => setText(e.target.value)}

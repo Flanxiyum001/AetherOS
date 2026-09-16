@@ -31,6 +31,7 @@ vi.mock('trystero', () => {
       },
       onPeerJoin: (f: (id: string) => void) => r.joinHandlers.push(f),
       onPeerLeave: (f: (id: string) => void) => r.leaveHandlers.push(f),
+      onPeerStream: vi.fn(),
       leave: vi.fn(() => Promise.resolve()),
       ping: vi.fn(),
       getPeers: vi.fn(() => ({})),

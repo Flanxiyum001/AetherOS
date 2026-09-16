@@ -1,7 +1,10 @@
 import {useEffect, useRef, useState} from 'react'
 import {motion} from 'framer-motion'
-import {useOS} from '../store'
+import {useOS, APPS} from '../store'
 import {disconnect} from '../net'
+import {soundEnabledPref, setSoundEnabledPref} from '../sound'
+import {openContextMenu, dockMenuEntries} from './ContextMenu'
+import NotificationCenter from './NotificationCenter'
 
 const leaveRoom = () => {
   disconnect()
@@ -15,7 +18,10 @@ export default function MenuBar({room}: {room: string | null}) {
   const theme = useOS(s => s.theme)
   const setTheme = useOS(s => s.setTheme)
   const openApp = useOS(s => s.openApp)
+  const selfName = useOS(s => s.selfName)
+  const selfAvatar = useOS(s => s.selfAvatar)
   const [open, setOpen] = useState<Menu | null>(null)
+  const [soundOn, setSoundOn] = useState(soundEnabledPref())
   const barRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -77,6 +83,8 @@ export default function MenuBar({room}: {room: string | null}) {
 
   const Sep = () => <div className="mx-2 my-1 h-px bg-black/10 dark:bg-white/15" />
 
+  const toggleMission = () => window.dispatchEvent(new Event('aether:mission-control'))
+
   const menus: Record<Menu, string> = {
     apple: '',
     room: room ?? 'Room',
@@ -104,6 +112,15 @@ export default function MenuBar({room}: {room: string | null}) {
             <Item onClick={() => openApp('settings')}>About This Machine</Item>
             <Sep />
             <Item onClick={() => openApp('settings')}>System Settings…</Item>
+            <Item
+              onClick={() => {
+                const next = !soundOn
+                setSoundEnabledPref(next)
+                setSoundOn(next)
+              }}
+            >
+              <span className="w-4 text-center">{soundOn ? '✓' : ''}</span> UI Sounds
+            </Item>
             <Sep />
             <Item onClick={leaveRoom}>Leave Room</Item>
           </div>
@@ -165,18 +182,19 @@ export default function MenuBar({room}: {room: string | null}) {
                 </Item>
                 <Sep />
                 <Item onClick={() => openApp('settings')}>Wallpaper…</Item>
+                <Sep />
+                <Item onClick={toggleMission}>Mission Control</Item>
               </Menu>
             )}
 
             {open === m && m === 'go' && (
               <Menu width="w-44">
-                {(['chat', 'drive', 'music', 'photos', 'pong', 'terminal', 'monitor', 'settings'] as const).map(
-                  id => (
-                    <Item key={id} onClick={() => openApp(id)}>
-                      {id === 'settings' ? 'System Settings' : id[0].toUpperCase() + id.slice(1)}
-                    </Item>
-                  )
-                )}
+                {APPS.map(a => (
+                  <Item key={a.id} onClick={() => openApp(a.id)}>
+                    <span className="w-4 text-center">{a.icon}</span>
+                    {a.label}
+                  </Item>
+                ))}
               </Menu>
             )}
 
@@ -206,9 +224,17 @@ export default function MenuBar({room}: {room: string | null}) {
       )}
 
       <div className="flex-1" />
-      <span className="tabular-nums text-black/60 dark:text-white/60">
-        {useOS.getState().selfName}
-      </span>
+      <button
+        onClick={e =>
+          openContextMenu(e.clientX - 40, e.clientY + 14, dockMenuEntries('settings'))
+        }
+        title="Account"
+        className="flex items-center gap-1.5 rounded-full py-0.5 pl-1 pr-2 hover:bg-black/10 dark:hover:bg-white/10"
+      >
+        <span className="text-[13px] leading-none">{selfAvatar}</span>
+        <span className="text-[12px] text-black/70 dark:text-white/70">{selfName}</span>
+      </button>
+      <NotificationCenter />
       <Clock />
     </div>
   )

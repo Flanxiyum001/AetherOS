@@ -1,6 +1,7 @@
 import {useState} from 'react'
 import {motion} from 'framer-motion'
 import {useOS, APPS} from '../store'
+import {openContextMenu, dockMenuEntries} from './ContextMenu'
 
 export default function Dock() {
   const openApp = useOS(s => s.openApp)
@@ -19,6 +20,10 @@ export default function Dock() {
             <motion.button
               key={app.id}
               onClick={() => openApp(app.id)}
+              onContextMenu={e => {
+                e.preventDefault()
+                openContextMenu(e.clientX - 105, e.clientY - 8, dockMenuEntries(app.id))
+              }}
               onMouseEnter={() => setHovered(app.id)}
               onMouseLeave={() => setHovered(null)}
               title={app.label}

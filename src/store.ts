@@ -57,6 +57,7 @@ export interface WindowState {
 export interface PeerInfo {
   id: UserId
   name: string
+  avatar?: string
   connectedAt: number
 }
 
@@ -69,6 +70,12 @@ export const WALLPAPERS: {id: Exclude<WallpaperId, 'custom'>; label: string}[] =
   {id: 'dune', label: 'Dune'},
   {id: 'graphite', label: 'Graphite'},
   {id: 'midnight', label: 'Midnight'},
+]
+
+/** avatar choices shown in the Lobby and System Settings */
+export const AVATARS = [
+  '👤', '🐱', '🐶', '🦊', '🐼', '🐸', '🐵', '🦉', '🐙', '🦄',
+  '🐝', '🐧', '🌵', '🌻', '🍀', '🍕', '👾', '🚀', '⭐', '🎧',
 ]
 
 function load<T>(key: string, fallback: T): T {
@@ -93,6 +100,17 @@ function applyThemeClass(t: Theme) {
     document.documentElement.classList.toggle('dark', t === 'dark')
 }
 
+/** debounced per-app window-position persistence (mac reopens windows where
+ *  you left them); write is deferred so mousemove drags don't hammer storage */
+const posTimers: Record<string, ReturnType<typeof setTimeout>> = {}
+function schedulePosSave(appId: string) {
+  clearTimeout(posTimers[appId])
+  posTimers[appId] = setTimeout(() => {
+    const w = useOS.getState().windows.find(w => w.appId === appId)
+    if (w && !w.maximized) save('pos:' + appId, {x: w.x, y: w.y, w: w.w, h: w.h})
+  }, 350)
+}
+
 const initialTheme = load<Theme>('theme', 'light')
 applyThemeClass(initialTheme)
 
@@ -100,7 +118,9 @@ interface OSState {
   // identity
   selfId: UserId
   selfName: string
+  selfAvatar: string
   setName: (n: string) => void
+  setAvatar: (a: string) => void
 
   // room
   roomId: string | null
@@ -108,7 +128,7 @@ interface OSState {
 
   // peers
   peers: Record<UserId, PeerInfo>
-  upsertPeer: (id: UserId, name: string) => void
+  upsertPeer: (id: UserId, name: string, avatar?: string) => void
   removePeer: (id: UserId) => void
 
   // chat
@@ -159,9 +179,13 @@ export const APPS = [
   {id: 'drive', label: 'Drive', icon: '💾'},
   {id: 'music', label: 'Music', icon: '🎵'},
   {id: 'photos', label: 'Photos', icon: '🖼️'},
+  {id: 'notes', label: 'Notes', icon: '📝'},
+  {id: 'calc', label: 'Calculator', icon: '🧮'},
+  {id: 'calendar', label: 'Calendar', icon: '📅'},
   {id: 'pong', label: 'Pong', icon: '🏓'},
   {id: 'terminal', label: 'Terminal', icon: '⌨️'},
   {id: 'monitor', label: 'Monitor', icon: '📡'},
+  {id: 'call', label: 'Call', icon: '📞'},
   {id: 'settings', label: 'Settings', icon: '⚙️'},
 ] as const
 
@@ -171,21 +195,32 @@ const DEFAULT_H = 400
 export const useOS = create<OSState>((set, get) => ({
   selfId: nanoid(10),
   selfName: 'anon-' + Math.floor(1000 + Math.random() * 9000),
+  selfAvatar: load<string>('avatar', '👤'),
   setName: n => set({selfName: n}),
+  setAvatar: a => {
+    save('avatar', a)
+    set({selfAvatar: a})
+  },
 
   roomId: null,
   setRoomId: id => set({roomId: id}),
 
   peers: {},
-  upsertPeer: (id, name) =>
-    set(s => ({
-      peers: {
-        ...s.peers,
-        [id]: s.peers[id]
-          ? {...s.peers[id], name}
-          : {id, name, connectedAt: Date.now()},
-      },
-    })),
+  upsertPeer: (id, name, avatar) =>
+    set(s => {
+      const prev = s.peers[id]
+      return {
+        peers: {
+          ...s.peers,
+          [id]: {
+            id,
+            name: name ?? prev?.name ?? '…',
+            avatar: avatar ?? prev?.avatar,
+            connectedAt: prev?.connectedAt ?? Date.now(),
+          },
+        },
+      }
+    }),
   removePeer: id =>
     set(s => {
       const peers = {...s.peers}
@@ -234,8 +269,23 @@ export const useOS = create<OSState>((set, get) => ({
     }
     const n = get().windows.length
     const z = get().zTop + 1
-    const w = Math.min(DEFAULT_W, window.innerWidth - 40)
-    const h = Math.min(DEFAULT_H, window.innerHeight - 120)
+    // mac behaviour: reopen the window where it was last dragged/resized
+    const saved = load<{x: number; y: number; w: number; h: number} | null>(
+      'pos:' + appId,
+      null
+    )
+    const maxW = window.innerWidth - 40
+    const maxH = window.innerHeight - 120
+    const w = Math.min(saved?.w ?? DEFAULT_W, Math.max(280, maxW))
+    const h = Math.min(saved?.h ?? DEFAULT_H, Math.max(180, maxH))
+    const x = Math.min(
+      saved?.x ?? 80 + ((n * 32) % 200),
+      Math.max(0, window.innerWidth - 100)
+    )
+    const y = Math.min(
+      saved?.y ?? 70 + ((n * 28) % 160),
+      Math.max(28, window.innerHeight - 60)
+    )
     set(s => ({
       windows: [
         ...s.windows,
@@ -243,8 +293,8 @@ export const useOS = create<OSState>((set, get) => ({
           id: nanoid(6),
           appId,
           title: APPS.find(a => a.id === appId)?.label ?? appId,
-          x: 80 + ((n * 32) % 200),
-          y: 70 + ((n * 28) % 160),
+          x,
+          y,
           w,
           h,
           z,
@@ -276,14 +326,20 @@ export const useOS = create<OSState>((set, get) => ({
         w.id === id ? {...w, maximized: !w.maximized} : w
       ),
     })),
-  moveWindow: (id, x, y) =>
+  moveWindow: (id, x, y) => {
     set(s => ({
       windows: s.windows.map(w => (w.id === id ? {...w, x, y} : w)),
-    })),
-  resizeWindow: (id, newW, newH) =>
+    }))
+    const appId = get().windows.find(w => w.id === id)?.appId
+    if (appId) schedulePosSave(appId)
+  },
+  resizeWindow: (id, newW, newH) => {
     set(s => ({
       windows: s.windows.map(w => (w.id === id ? {...w, w: newW, h: newH} : w)),
-    })),
+    }))
+    const appId = get().windows.find(w => w.id === id)?.appId
+    if (appId) schedulePosSave(appId)
+  },
 
   theme: initialTheme,
   setTheme: t => {

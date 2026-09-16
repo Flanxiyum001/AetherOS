@@ -1,6 +1,6 @@
 import {useRef} from 'react'
-import {useOS, WALLPAPERS} from '../store'
-import {myId, getRoomId} from '../net'
+import {useOS, WALLPAPERS, AVATARS} from '../store'
+import {myId, getRoomId, renameSelf, pushAvatar} from '../net'
 
 export default function SystemSettings() {
   const theme = useOS(s => s.theme)
@@ -10,6 +10,7 @@ export default function SystemSettings() {
   const customWallpaper = useOS(s => s.customWallpaper)
   const setCustomWallpaper = useOS(s => s.setCustomWallpaper)
   const selfName = useOS(s => s.selfName)
+  const selfAvatar = useOS(s => s.selfAvatar)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const pickCustom = (file: File | undefined | null) => {
@@ -25,6 +26,42 @@ export default function SystemSettings() {
 
   return (
     <div className="h-full overflow-auto bg-[#f2f2f4] p-4 dark:bg-[#1e1e20]">
+      {/* ---------- Account ---------- */}
+      <Section title="Account">
+        <div className="flex items-center gap-3">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-b from-white/95 to-[#e4e8ef] text-[24px] ring-1 ring-black/10 dark:from-[#3a3a40] dark:to-[#26262b] dark:ring-white/15">
+            {selfAvatar}
+          </span>
+          <input
+            value={selfName}
+            onChange={e => renameSelf(e.target.value.slice(0, 24))}
+            className="w-44 rounded-lg border border-black/10 bg-white px-2.5 py-1.5 text-[13px] text-black/85 outline-none focus:border-[var(--mac-accent)] focus:ring-2 focus:ring-[var(--mac-accent)]/25 dark:border-white/15 dark:bg-[#1c1c1e] dark:text-white/90"
+          />
+        </div>
+        <div className="mt-2.5 flex flex-wrap gap-1">
+          {AVATARS.map(a => (
+            <button
+              key={a}
+              onClick={() => {
+                useOS.getState().setAvatar(a)
+                pushAvatar(a)
+              }}
+              title="Set avatar"
+              className={`mac-press rounded-md px-1 py-0.5 text-[16px] transition hover:scale-110 ${
+                a === selfAvatar
+                  ? 'bg-[var(--mac-accent)]/20 ring-1 ring-[var(--mac-accent)]'
+                  : 'hover:bg-black/[0.06] dark:hover:bg-white/10'
+              }`}
+            >
+              {a}
+            </button>
+          ))}
+        </div>
+        <p className="mt-2 text-[11px] text-black/40 dark:text-white/40">
+          Your avatar is shared with peers over the room — no upload, just an emoji.
+        </p>
+      </Section>
+
       {/* ---------- Appearance ---------- */}
       <Section title="Appearance">
         <div className="flex gap-4">

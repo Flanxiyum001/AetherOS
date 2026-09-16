@@ -28,12 +28,16 @@ let room: Room | null = null
 let currentRoomId: string | null = null
 
 let sendName: ActionSender<string> | null = null
+let sendAvatar: ActionSender<string> | null = null
 let sendChat: ActionSender<ChatMessage> | null = null
 let sendMeta: ActionSender<DriveFileMeta> | null = null
 let sendReq: ActionSender<{fileId: string}> | null = null
 let sendBlob: ActionSender<Blob> | null = null
 let sendPong: ActionSender<{y: number}> | null = null
 let pongHandler: ((y: number) => void) | null = null
+
+// ---- media calls (voice / video / screen share) ----
+let localStream: MediaStream | null = null
 
 export function getRoomId() {
   return currentRoomId
@@ -51,22 +55,53 @@ export function connect(roomId: string): Room {
   room = r
 
   const [nameSender, nameReceiver] = r.makeAction<string>('name')
+  const [avatarSender, avatarReceiver] = r.makeAction<string>('avatar')
   const [chatSender, chatReceiver] = r.makeAction<ChatMessage>('chat')
   const [metaSender, metaReceiver] = r.makeAction<DriveFileMeta>('dmeta')
   const [reqSender, reqReceiver] = r.makeAction<{fileId: string}>('dreq')
   const [blobSender, blobReceiver] = r.makeAction<Blob>('dblob')
   const [pongSender, pongReceiver] = r.makeAction<{y: number}>('pong')
+  const [, callReceiver] = r.makeAction<{
+    type: 'offer' | 'accept' | 'decline' | 'hangup'
+    video?: boolean
+  }>('call')
 
   sendName = nameSender
+  sendAvatar = avatarSender
   sendChat = chatSender
   sendMeta = metaSender
   sendReq = reqSender
   sendBlob = blobSender
   sendPong = pongSender
 
+  // call signaling
+  callReceiver((msg, peerId) => {
+    if (!msg || typeof msg !== 'object') return
+    if (msg.type === 'offer') {
+      callRingHandler?.(peerId, !!msg.video)
+    } else if (msg.type === 'accept') {
+      callAcceptHandler?.(peerId)
+    } else if (msg.type === 'decline') {
+      callEndHandler?.(peerId, 'declined')
+    } else if (msg.type === 'hangup') {
+      callEndHandler?.(peerId, 'hung up')
+    }
+  })
+
   // ---- incoming actions ----
   nameReceiver((name, peerId) => {
     useOS.getState().upsertPeer(peerId, String(name))
+  })
+
+  avatarReceiver((avatar, peerId) => {
+    if (typeof avatar === 'string' && avatar)
+      useOS
+        .getState()
+        .upsertPeer(
+          peerId,
+          useOS.getState().peers[peerId]?.name ?? '…',
+          avatar.slice(0, 8)
+        )
   })
 
   chatReceiver((msg, peerId) => {
@@ -115,6 +150,7 @@ export function connect(roomId: string): Room {
   r.onPeerJoin(peerId => {
     useOS.getState().upsertPeer(peerId, '…')
     void sendName?.(useOS.getState().selfName, peerId)
+    void sendAvatar?.(useOS.getState().selfAvatar, peerId)
     // sync the drive listing so late joiners see the shared disk
     void listFiles().then(metas => {
       for (const m of metas) void sendMeta?.(m, peerId)
@@ -137,7 +173,10 @@ export function connect(roomId: string): Room {
       text: `peer ${peerId.slice(0, 6)} disconnected`,
       ts: Date.now(),
     })
+    peerLeftHandler?.(peerId)
   })
+
+  attachMediaHooks()
 
   return r
 }
@@ -228,6 +267,12 @@ export function renameSelf(name: string) {
   void sendName?.(name)
 }
 
+/** broadcast a changed avatar to connected peers (Lobby changes happen
+ *  pre-connection, so peer join announce covers those) */
+export function pushAvatar(avatar: string) {
+  void sendAvatar?.(avatar)
+}
+
 // Persist a local file into the drive and announce its metadata to the room.
 export async function addFileToDrive(file: File) {
   const s = useOS.getState()
@@ -270,6 +315,94 @@ export function finishTransfer(fileId: string, peerId: string) {
     x => x.id === fileId || x.id === `${fileId}:${peerId}`
   )
   if (t) s.updateTransfer(t.id, {progress: 1, status: 'done'})
+}
+
+// ---- media calls ----
+let callRingHandler: ((peerId: string, video: boolean) => void) | null = null
+let callAcceptHandler: ((peerId: string) => void) | null = null
+let callEndHandler: ((peerId: string, reason: string) => void) | null = null
+let streamHandler: ((stream: MediaStream, peerId: string) => void) | null = null
+let peerLeftHandler: ((peerId: string) => void) | null = null
+
+export function onCallRing(h: (peerId: string, video: boolean) => void) {
+  callRingHandler = h
+}
+export function onCallAccept(h: (peerId: string) => void) {
+  callAcceptHandler = h
+}
+export function onCallEnd(h: (peerId: string, reason: string) => void) {
+  callEndHandler = h
+}
+export function onPeerMedia(h: (stream: MediaStream, peerId: string) => void) {
+  streamHandler = h
+}
+export function onPeerLeft(h: (peerId: string) => void) {
+  peerLeftHandler = h
+}
+
+function getRoom(): Room | null {
+  return room
+}
+
+async function getMedia(video: boolean): Promise<MediaStream> {
+  if (localStream) return localStream
+  localStream = await navigator.mediaDevices.getUserMedia({
+    audio: true,
+    video: video ? {width: {ideal: 1280}} : false,
+  })
+  return localStream
+}
+
+export function stopLocalMedia() {
+  localStream?.getTracks().forEach(t => t.stop())
+  localStream = null
+}
+
+export function getLocalMedia(): MediaStream | null {
+  return localStream
+}
+
+export async function placeCall(peerId: string, video: boolean) {
+  void (await getMedia(video))
+  void sendCallMsg(peerId, {type: 'offer', video})
+}
+
+export async function acceptCall(peerId: string, video: boolean) {
+  await getMedia(video)
+  void sendCallMsg(peerId, {type: 'accept'})
+}
+
+export function declineCall(peerId: string) {
+  void sendCallMsg(peerId, {type: 'decline'})
+}
+
+export function hangUp(peerId: string) {
+  void sendCallMsg(peerId, {type: 'hangup'})
+  stopLocalMedia()
+}
+
+async function sendCallMsg(peerId: string, msg: {type: string; video?: boolean}) {
+  // room.makeAction senders are module-scoped via connect(); re-resolve each call
+  const r = getRoom()
+  if (!r) return
+  const [send] = r.makeAction<{type: string; video?: boolean}>('call')
+  void send(msg as {type: 'offer' | 'accept' | 'decline' | 'hangup'; video?: boolean}, peerId)
+}
+
+// attach the room's stream listeners once connect() runs
+export function attachMediaHooks() {
+  const r = getRoom()
+  if (!r) return
+  r.onPeerStream((stream, peerId) => {
+    streamHandler?.(stream, peerId)
+  })
+  r.onPeerLeave(id => peerLeftHandler?.(id))
+}
+
+export function pushLocalStream(stream: MediaStream) {
+  const r = getRoom()
+  if (!r) return
+  void r.addStream(stream)
 }
 
 export function sendPongInput(y: number) {

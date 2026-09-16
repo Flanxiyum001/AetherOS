@@ -9,6 +9,10 @@ import MonitorApp from './MonitorApp'
 import SystemSettings from './SystemSettings'
 import MusicApp from './MusicApp'
 import PhotosApp from './PhotosApp'
+import NotesApp from './NotesApp'
+import CalculatorApp from './CalculatorApp'
+import CalendarApp from './CalendarApp'
+import CallApp from './CallApp'
 
 const COMPONENTS: Record<string, () => JSX.Element> = {
   chat: ChatApp,
@@ -19,6 +23,10 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   settings: SystemSettings,
   music: MusicApp,
   photos: PhotosApp,
+  notes: NotesApp,
+  calc: CalculatorApp,
+  calendar: CalendarApp,
+  call: CallApp,
 }
 
 const GLYPH = {
@@ -43,8 +51,12 @@ export default function Window({win, app}: {win: WindowState; app: string}) {
     focusWindow(win.id)
     if (win.maximized) return
     dragRef.current = {dx: e.clientX - win.x, dy: e.clientY - win.y}
+    let lastX = e.clientX
+    let lastY = e.clientY
     const onMove = (ev: MouseEvent) => {
       if (!dragRef.current) return
+      lastX = ev.clientX
+      lastY = ev.clientY
       moveWindow(
         win.id,
         Math.max(0, Math.min(window.innerWidth - 100, ev.clientX - dragRef.current.dx)),
@@ -55,6 +67,20 @@ export default function Window({win, app}: {win: WindowState; app: string}) {
       dragRef.current = null
       window.removeEventListener('mousemove', onMove)
       window.removeEventListener('mouseup', onUp)
+      // ---- snap zones: left/right halves, top maximize ----
+      const EDGE = 24
+      const TOP = 34
+      const W = window.innerWidth
+      const H = window.innerHeight
+      if (lastY <= TOP) {
+        if (!win.maximized) toggleMaximize(win.id)
+      } else if (lastX <= EDGE) {
+        moveWindow(win.id, 0, 28)
+        resizeWindow(win.id, Math.round(W / 2), H - 28 - 74)
+      } else if (lastX >= W - EDGE) {
+        moveWindow(win.id, Math.round(W / 2), 28)
+        resizeWindow(win.id, Math.round(W / 2), H - 28 - 74)
+      }
     }
     window.addEventListener('mousemove', onMove)
     window.addEventListener('mouseup', onUp)
@@ -86,11 +112,23 @@ export default function Window({win, app}: {win: WindowState; app: string}) {
     ? {left: 0, top: 28, width: '100vw', height: 'calc(100vh - 28px - 74px)', zIndex: win.z}
     : {left: win.x, top: win.y, width: win.w, height: win.h, zIndex: win.z}
 
+  // genie-ish exit: window shrinks toward the dock (bottom center)
+  const dockTarget = () => ({
+    x: window.innerWidth / 2 - (win.x + win.w / 2),
+    y: window.innerHeight - win.y - win.h / 2,
+  })
+
   return (
     <motion.div
       initial={{opacity: 0, scale: 0.92, y: 14}}
       animate={{opacity: 1, scale: 1, y: 0}}
-      exit={{opacity: 0, scale: 0.96, y: 24}}
+      exit={{
+        opacity: 0,
+        scale: 0.25,
+        x: dockTarget().x,
+        y: dockTarget().y,
+        transition: {duration: 0.28, ease: 'easeIn'},
+      }}
       transition={{
         type: 'spring',
         stiffness: 420,

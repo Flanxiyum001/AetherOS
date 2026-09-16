@@ -15,7 +15,7 @@ export default function TransferHud() {
           className="glass rounded-[12px] p-2.5 text-[11px] shadow-[0_8px_28px_rgba(0,0,0,0.14)]"
         >
           <div className="mb-1 flex items-center justify-between gap-2">
-            <span className="truncate font-medium text-black/80">
+            <span className="truncate font-medium text-black/80 dark:text-white/85">
               {t.direction === 'send' ? '▲' : '▼'} {t.fileName}
             </span>
             <span
@@ -34,7 +34,7 @@ export default function TransferHud() {
                 : `${Math.round(t.progress * 100)}%`}
             </span>
           </div>
-          <div className="h-1 overflow-hidden rounded-full bg-black/10">
+          <div className="h-1 overflow-hidden rounded-full bg-black/10 dark:bg-white/15">
             <div
               className={`h-full rounded-full transition-all ${
                 t.status === 'failed'
@@ -46,7 +46,7 @@ export default function TransferHud() {
               style={{width: `${Math.round(t.progress * 100)}%`}}
             />
           </div>
-          <div className="mt-1 flex justify-between text-black/45">
+          <div className="mt-1 flex justify-between text-black/45 dark:text-white/45">
             <span>
               {t.direction === 'send' ? 'to' : 'from'} {t.peerName}
             </span>

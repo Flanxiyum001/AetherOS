@@ -8,6 +8,11 @@
   --win-radius: 12px;
 }
 
+html.dark {
+  --mac-bg: #1c1c1e;
+  --mac-accent: #0a84ff;
+}
+
 html,
 body,
 #root {
@@ -23,47 +28,106 @@ body,
   text-rendering: optimizeLegibility;
 }
 
+html.dark,
+html.dark body {
+  color: #f2f2f7;
+}
+
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.25) transparent;
+  scrollbar-color: rgba(127, 127, 127, 0.4) transparent;
 }
 *::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 *::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.22);
+  background: rgba(127, 127, 127, 0.35);
   border-radius: 4px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 *::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(127, 127, 127, 0.55);
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 
-/* ---------- macOS desktop wallpaper ---------- */
-.mac-wallpaper {
+/* ---------- wallpapers ---------- */
+.wp-sonoma {
   background:
     radial-gradient(1200px 700px at 75% 18%, #e8f0fe 0%, rgba(232, 240, 254, 0) 60%),
     radial-gradient(900px 600px at 18% 80%, #f3e8fd 0%, rgba(243, 232, 253, 0) 55%),
     radial-gradient(1000px 800px at 50% 45%, #ffffff 0%, rgba(255, 255, 255, 0) 70%),
     linear-gradient(160deg, #f5f5f7 0%, #eef1f6 55%, #e9edf3 100%);
 }
+html.dark .wp-sonoma {
+  background:
+    radial-gradient(1200px 700px at 75% 18%, #1d2a45 0%, rgba(29, 42, 69, 0) 60%),
+    radial-gradient(900px 600px at 18% 80%, #2b2140 0%, rgba(43, 33, 64, 0) 55%),
+    radial-gradient(1000px 800px at 50% 45%, #10131b 0%, rgba(16, 19, 27, 0) 70%),
+    linear-gradient(160deg, #0e0f13 0%, #12141c 55%, #141724 100%);
+}
 
-/* ---------- glass materials ---------- */
+.wp-ventura {
+  background:
+    radial-gradient(1100px 700px at 20% 15%, #ffe9ec 0%, rgba(255, 233, 236, 0) 55%),
+    radial-gradient(1000px 750px at 80% 85%, #e0ecff 0%, rgba(224, 236, 255, 0) 60%),
+    linear-gradient(150deg, #fdf6f7 0%, #f2f4fa 60%, #ecf0f8 100%);
+}
+html.dark .wp-ventura {
+  background:
+    radial-gradient(1100px 700px at 20% 15%, #3c1d28 0%, rgba(60, 29, 40, 0) 55%),
+    radial-gradient(1000px 750px at 80% 85%, #16233d 0%, rgba(22, 35, 61, 0) 60%),
+    linear-gradient(150deg, #14090d 0%, #101420 60%, #0f1424 100%);
+}
+
+.wp-dune {
+  background:
+    radial-gradient(1000px 650px at 30% 20%, #fdeeda 0%, rgba(253, 238, 218, 0) 55%),
+    radial-gradient(900px 700px at 75% 80%, #f7d9b8 0%, rgba(247, 217, 184, 0) 60%),
+    linear-gradient(160deg, #faf3e7 0%, #f3e7d3 60%, #eedfc7 100%);
+}
+html.dark .wp-dune {
+  background:
+    radial-gradient(1000px 650px at 30% 20%, #45301b 0%, rgba(69, 48, 27, 0) 55%),
+    radial-gradient(900px 700px at 75% 80%, #2e2012 0%, rgba(46, 32, 18, 0) 60%),
+    linear-gradient(160deg, #191207 0%, #1c150b 60%, #20180d 100%);
+}
+
+.wp-graphite {
+  background: linear-gradient(165deg, #ececee 0%, #e2e3e6 50%, #d8dadd 100%);
+}
+html.dark .wp-graphite {
+  background: linear-gradient(165deg, #1a1a1c 0%, #161618 50%, #101012 100%);
+}
+
+.wp-midnight {
+  background:
+    radial-gradient(1000px 600px at 70% 20%, #14213d 0%, rgba(20, 33, 61, 0) 60%),
+    linear-gradient(165deg, #05070d 0%, #0a0f1c 55%, #0d1526 100%);
+}
+html:not(.dark) .wp-midnight {
+  filter: saturate(1.05);
+}
+
+/* custom uploaded wallpaper */
+.wp-custom {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* ---------- glass materials (theme-aware) ---------- */
 .glass {
   background: rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(18px) saturate(180%);
   -webkit-backdrop-filter: blur(18px) saturate(180%);
   border: 1px solid rgba(0, 0, 0, 0.08);
 }
-.glass-dark {
-  background: rgba(28, 28, 30, 0.55);
-  backdrop-filter: blur(18px) saturate(180%);
-  -webkit-backdrop-filter: blur(18px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+html.dark .glass {
+  background: rgba(40, 40, 43, 0.68);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 /* ---------- mac window shadow + ring ---------- */
@@ -73,6 +137,12 @@ body,
     0 0 0 0.5px rgba(0, 0, 0, 0.18),
     0 12px 28px rgba(0, 0, 0, 0.22),
     0 30px 60px rgba(0, 0, 0, 0.14);
+}
+html.dark .mac-window {
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.14),
+    0 12px 28px rgba(0, 0, 0, 0.5),
+    0 30px 60px rgba(0, 0, 0, 0.4);
 }
 
 /* ---------- traffic lights ---------- */
@@ -96,7 +166,7 @@ body,
 
 /* ---------- selection + focus ---------- */
 ::selection {
-  background: rgba(10, 132, 255, 0.25);
+  background: rgba(10, 132, 255, 0.3);
 }
 input:focus-visible,
 button:focus-visible {

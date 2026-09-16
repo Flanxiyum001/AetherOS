@@ -129,24 +129,25 @@ export default function PongApp() {
         s.vy = 2
       }
 
-      // draw (mac palette: accent blue paddles, dark ball, soft bg)
-      ctx.fillStyle = '#f2f2f5'
+      // draw (mac palette: accent paddles, theme-aware bg)
+      const dark = document.documentElement.classList.contains('dark')
+      ctx.fillStyle = dark ? '#1c1c1e' : '#f2f2f5'
       ctx.fillRect(0, 0, W, H)
-      ctx.strokeStyle = 'rgba(0,0,0,0.12)'
+      ctx.strokeStyle = dark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)'
       ctx.setLineDash([4, 6])
       ctx.beginPath()
       ctx.moveTo(W / 2, 0)
       ctx.lineTo(W / 2, H)
       ctx.stroke()
       ctx.setLineDash([])
-      ctx.fillStyle = '#5b6470'
+      ctx.fillStyle = dark ? '#98989d' : '#5b6470'
       ctx.font = 'bold 28px -apple-system, monospace'
       ctx.fillText(String(s.scoreL), W / 2 - 50, 36)
       ctx.fillText(String(s.scoreR), W / 2 + 30, 36)
       ctx.fillStyle = '#0a84ff'
       ctx.fillRect(16, s.leftY, PAD_W, PAD_H)
       ctx.fillRect(rx, s.rightY, PAD_W, PAD_H)
-      ctx.fillStyle = '#2c2c2e'
+      ctx.fillStyle = dark ? '#f2f2f7' : '#2c2c2e'
       ctx.fillRect(s.ballx - 4, s.bally - 4, 8, 8)
 
       raf = requestAnimationFrame(loop)
@@ -161,9 +162,9 @@ export default function PongApp() {
         ref={canvasRef}
         width={W}
         height={H}
-        className="max-w-full rounded-[12px] border border-black/10 shadow-sm"
+        className="max-w-full rounded-[12px] border border-black/10 shadow-sm dark:border-white/15"
       />
-      <p className="text-[11px] text-black/45">
+      <p className="text-[11px] text-black/45 dark:text-white/45">
         {hasPeer
           ? isLeft.current === false
             ? 'you are right paddle — ↑/↓ to move'

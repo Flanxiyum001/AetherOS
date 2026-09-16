@@ -18,10 +18,11 @@ export default function MonitorApp() {
     const draw = () => {
       const w = canvasRef.current!.width
       const h = canvasRef.current!.height
+      const dark = document.documentElement.classList.contains('dark')
       ctx.clearRect(0, 0, w, h)
-      ctx.fillStyle = '#f6f6f6'
+      ctx.fillStyle = dark ? '#2c2c30' : '#f6f6f6'
       ctx.fillRect(0, 0, w, h)
-      ctx.strokeStyle = '#0a84ff'
+      ctx.strokeStyle = dark ? '#409cff' : '#0a84ff'
       ctx.lineWidth = 1.5
       ctx.beginPath()
       for (let x = 0; x < w; x++) {
@@ -40,12 +41,12 @@ export default function MonitorApp() {
   }, [peers])
 
   return (
-    <div className="space-y-3 p-3 text-[12px]">
+    <div className="space-y-3 p-3 text-[12px] text-black/80 dark:text-white/80">
       <canvas
         ref={canvasRef}
         width={480}
         height={80}
-        className="w-full rounded-[10px] border border-black/[0.08]"
+        className="w-full rounded-[10px] border border-black/[0.08] dark:border-white/10"
       />
 
       <div className="grid grid-cols-2 gap-2">
@@ -61,23 +62,23 @@ export default function MonitorApp() {
       </div>
 
       <div>
-        <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-black/40">
+        <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-black/40 dark:text-white/40">
           Connected peers
         </div>
         {Object.keys(peers).length === 0 ? (
-          <p className="text-black/35">No peers yet — share the room code</p>
+          <p className="text-black/35 dark:text-white/35">No peers yet — share the room code</p>
         ) : (
           <div className="space-y-1">
             {Object.values(peers).map(p => (
               <div
                 key={p.id}
-                className="flex items-center justify-between rounded-[10px] border border-black/[0.06] bg-[#f6f6f6]/80 px-2.5 py-1.5"
+                className="flex items-center justify-between rounded-[10px] border border-black/[0.06] bg-[#f6f6f6]/80 px-2.5 py-1.5 dark:border-white/10 dark:bg-[#2c2c30]/80"
               >
-                <span className="text-black/80">
+                <span className="text-black/80 dark:text-white/80">
                   <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
                   {p.name}
                 </span>
-                <span className="text-black/40">{p.id.slice(0, 8)}</span>
+                <span className="text-black/40 dark:text-white/40">{p.id.slice(0, 8)}</span>
               </div>
             ))}
           </div>
@@ -89,11 +90,11 @@ export default function MonitorApp() {
 
 function Stat({label, value}: {label: string; value: string}) {
   return (
-    <div className="rounded-[10px] border border-black/[0.06] bg-[#f6f6f6]/80 px-2.5 py-1.5">
-      <div className="text-[10px] font-medium uppercase tracking-wider text-black/40">
+    <div className="rounded-[10px] border border-black/[0.06] bg-[#f6f6f6]/80 px-2.5 py-1.5 dark:border-white/10 dark:bg-[#2c2c30]/80">
+      <div className="text-[10px] font-medium uppercase tracking-wider text-black/40 dark:text-white/40">
         {label}
       </div>
-      <div className="truncate font-medium text-black/80">{value}</div>
+      <div className="truncate font-medium text-black/80 dark:text-white/80">{value}</div>
     </div>
   )
 }

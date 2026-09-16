@@ -25,20 +25,20 @@ export default function Lobby() {
           </div>
         </div>
 
-        <h1 className="text-center text-[15px] font-semibold text-black/85">
+        <h1 className="text-center text-[15px] font-semibold text-black/85 dark:text-white/90">
           {selfName}
         </h1>
-        <p className="mb-6 text-center text-[12px] text-black/50">
+        <p className="mb-6 text-center text-[12px] text-black/50 dark:text-white/50">
           Aether · P2P Desktop
         </p>
 
-        <label className="mb-1 block text-[11px] font-medium text-black/50">
+        <label className="mb-1 block text-[11px] font-medium text-black/50 dark:text-white/50">
           Handle
         </label>
         <input
           value={selfName}
           onChange={e => setName(e.target.value.slice(0, 24))}
-          className="mb-4 w-full rounded-lg border border-black/10 bg-white/80 px-3 py-1.5 text-[13px] text-black/85 outline-none focus:border-[var(--mac-accent)] focus:ring-2 focus:ring-[var(--mac-accent)]/25"
+          className="mb-4 w-full rounded-lg border border-black/10 bg-white/80 px-3 py-1.5 text-[13px] text-black/85 outline-none focus:border-[var(--mac-accent)] focus:ring-2 focus:ring-[var(--mac-accent)]/25 dark:border-white/15 dark:bg-[#1c1c1e]/80 dark:text-white/90"
         />
 
         <button
@@ -48,9 +48,9 @@ export default function Lobby() {
           Create New Machine
         </button>
 
-        <div className="mb-4 flex items-center gap-3 text-[11px] font-medium text-black/35">
-          <span className="h-px flex-1 bg-black/10" /> or join a friend{' '}
-          <span className="h-px flex-1 bg-black/10" />
+        <div className="mb-4 flex items-center gap-3 text-[11px] font-medium text-black/35 dark:text-white/35">
+          <span className="h-px flex-1 bg-black/10 dark:bg-white/15" /> or join a friend{' '}
+          <span className="h-px flex-1 bg-black/10 dark:bg-white/15" />
         </div>
 
         <form
@@ -64,17 +64,17 @@ export default function Lobby() {
             value={joinCode}
             onChange={e => setJoinCode(e.target.value)}
             placeholder="Room code"
-            className="w-full rounded-lg border border-black/10 bg-white/80 px-3 py-1.5 text-[13px] text-black/85 outline-none focus:border-[var(--mac-accent)] focus:ring-2 focus:ring-[var(--mac-accent)]/25"
+            className="w-full rounded-lg border border-black/10 bg-white/80 px-3 py-1.5 text-[13px] text-black/85 outline-none focus:border-[var(--mac-accent)] focus:ring-2 focus:ring-[var(--mac-accent)]/25 dark:border-white/15 dark:bg-[#1c1c1e]/80 dark:text-white/90"
           />
           <button
             type="submit"
-            className="mac-press rounded-lg border border-black/10 bg-white/70 px-4 py-1.5 text-[13px] font-medium text-black/75 transition hover:bg-white"
+            className="mac-press rounded-lg border border-black/10 bg-white/70 px-4 py-1.5 text-[13px] font-medium text-black/75 transition hover:bg-white dark:border-white/15 dark:bg-white/10 dark:text-white/80 dark:hover:bg-white/20"
           >
             Join
           </button>
         </form>
 
-        <p className="mt-6 text-center text-[10.5px] leading-relaxed text-black/40">
+        <p className="mt-6 text-center text-[10.5px] leading-relaxed text-black/40 dark:text-white/40">
           {myId().slice(0, 8)} · All traffic flows directly browser↔browser over
           WebRTC — no server, no account, no trace.
         </p>

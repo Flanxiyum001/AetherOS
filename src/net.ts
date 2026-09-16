@@ -177,7 +177,7 @@ export function disconnect() {
   currentRoomId = null
 }
 
-export function sendChatMessage(text: string) {
+export function sendChatMessage(text: string, attachment?: ChatMessage['attachment']) {
   const s = useOS.getState()
   const msg: ChatMessage = {
     id: nanoid(6),
@@ -185,9 +185,42 @@ export function sendChatMessage(text: string) {
     authorName: s.selfName,
     text,
     ts: Date.now(),
+    attachment,
   }
   s.addMessage(msg)
   void sendChat?.(msg)
+}
+
+// Attach an image/video to chat: persist locally, announce via Drive metadata
+// (so receivers can fetch the bytes), and link it from the chat message.
+export async function sendChatAttachment(file: File, caption = '') {
+  const s = useOS.getState()
+  const rec = makeFileMeta(file, file.name, s.selfId, s.selfName)
+  await putFile(rec)
+  s.addFile({
+    id: rec.id,
+    name: rec.name,
+    size: rec.size,
+    mime: rec.mime,
+    addedBy: rec.addedBy,
+    addedByName: rec.addedByName,
+    ts: rec.ts,
+  })
+  void sendMeta?.({
+    id: rec.id,
+    name: rec.name,
+    size: rec.size,
+    mime: rec.mime,
+    addedBy: rec.addedBy,
+    addedByName: rec.addedByName,
+    ts: rec.ts,
+  })
+  sendChatMessage(caption, {
+    fileId: rec.id,
+    name: rec.name,
+    mime: rec.mime,
+    size: rec.size,
+  })
 }
 
 export function renameSelf(name: string) {

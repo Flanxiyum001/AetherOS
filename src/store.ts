@@ -9,6 +9,8 @@ export type ChatMessage = {
   authorName: string
   text: string
   ts: number
+  /** attached media: stored in the local drive under this file id */
+  attachment?: {fileId: string; name: string; mime: string; size: number}
 }
 
 export type DriveFileMeta = {
@@ -58,6 +60,42 @@ export interface PeerInfo {
   connectedAt: number
 }
 
+export type Theme = 'light' | 'dark'
+export type WallpaperId = 'sonoma' | 'ventura' | 'dune' | 'graphite' | 'midnight' | 'custom'
+
+export const WALLPAPERS: {id: Exclude<WallpaperId, 'custom'>; label: string}[] = [
+  {id: 'sonoma', label: 'Sonoma'},
+  {id: 'ventura', label: 'Ventura'},
+  {id: 'dune', label: 'Dune'},
+  {id: 'graphite', label: 'Graphite'},
+  {id: 'midnight', label: 'Midnight'},
+]
+
+function load<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem('aether:' + key)
+    return raw === null ? fallback : (JSON.parse(raw) as T)
+  } catch {
+    return fallback
+  }
+}
+
+function save(key: string, value: unknown) {
+  try {
+    localStorage.setItem('aether:' + key, JSON.stringify(value))
+  } catch {
+    /* storage full or unavailable — appearance just won't persist */
+  }
+}
+
+function applyThemeClass(t: Theme) {
+  if (typeof document !== 'undefined')
+    document.documentElement.classList.toggle('dark', t === 'dark')
+}
+
+const initialTheme = load<Theme>('theme', 'light')
+applyThemeClass(initialTheme)
+
 interface OSState {
   // identity
   selfId: UserId
@@ -100,17 +138,31 @@ interface OSState {
   moveWindow: (id: string, x: number, y: number) => void
   resizeWindow: (id: string, w: number, h: number) => void
 
+  // appearance
+  theme: Theme
+  setTheme: (t: Theme) => void
+  wallpaper: WallpaperId
+  customWallpaper: string | null
+  setWallpaper: (w: WallpaperId) => void
+  setCustomWallpaper: (dataUrl: string | null) => void
+
   // session
   booted: boolean
   setBooted: (b: boolean) => void
+
+  // dock feedback: appId currently doing its launch bounce
+  bouncingApp: string | null
 }
 
 export const APPS = [
-  {id: 'chat', label: 'Chat', icon: '💬'},
+  {id: 'chat', label: 'Messages', icon: '💬'},
   {id: 'drive', label: 'Drive', icon: '💾'},
+  {id: 'music', label: 'Music', icon: '🎵'},
+  {id: 'photos', label: 'Photos', icon: '🖼️'},
   {id: 'pong', label: 'Pong', icon: '🏓'},
   {id: 'terminal', label: 'Terminal', icon: '⌨️'},
   {id: 'monitor', label: 'Monitor', icon: '📡'},
+  {id: 'settings', label: 'Settings', icon: '⚙️'},
 ] as const
 
 const DEFAULT_W = 560
@@ -168,6 +220,12 @@ export const useOS = create<OSState>((set, get) => ({
   windows: [],
   zTop: 10,
   openApp: appId => {
+    // dock launch bounce (mac-style feedback)
+    set({bouncingApp: appId})
+    setTimeout(() => {
+      if (get().bouncingApp === appId) set({bouncingApp: null})
+    }, 700)
+
     const existing = get().windows.find(w => w.appId === appId)
     if (existing) {
       get().focusWindow(existing.id)
@@ -227,6 +285,26 @@ export const useOS = create<OSState>((set, get) => ({
       windows: s.windows.map(w => (w.id === id ? {...w, w: newW, h: newH} : w)),
     })),
 
+  theme: initialTheme,
+  setTheme: t => {
+    applyThemeClass(t)
+    save('theme', t)
+    set({theme: t})
+  },
+
+  wallpaper: load<WallpaperId>('wallpaper', 'sonoma'),
+  customWallpaper: load<string | null>('customWallpaper', null),
+  setWallpaper: w => {
+    save('wallpaper', w)
+    set({wallpaper: w})
+  },
+  setCustomWallpaper: dataUrl => {
+    save('customWallpaper', dataUrl)
+    set({customWallpaper: dataUrl})
+  },
+
   booted: false,
   setBooted: b => set({booted: b}),
+
+  bouncingApp: null,
 }))

@@ -6,6 +6,9 @@ import DriveApp from './DriveApp'
 import TerminalApp from './TerminalApp'
 import PongApp from './PongApp'
 import MonitorApp from './MonitorApp'
+import SystemSettings from './SystemSettings'
+import MusicApp from './MusicApp'
+import PhotosApp from './PhotosApp'
 
 const COMPONENTS: Record<string, () => JSX.Element> = {
   chat: ChatApp,
@@ -13,6 +16,9 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   terminal: TerminalApp,
   pong: PongApp,
   monitor: MonitorApp,
+  settings: SystemSettings,
+  music: MusicApp,
+  photos: PhotosApp,
 }
 
 const GLYPH = {
@@ -82,10 +88,15 @@ export default function Window({win, app}: {win: WindowState; app: string}) {
 
   return (
     <motion.div
-      initial={{opacity: 0, scale: 0.97}}
-      animate={{opacity: 1, scale: 1}}
-      exit={{opacity: 0, scale: 0.97}}
-      transition={{duration: 0.15}}
+      initial={{opacity: 0, scale: 0.92, y: 14}}
+      animate={{opacity: 1, scale: 1, y: 0}}
+      exit={{opacity: 0, scale: 0.96, y: 24}}
+      transition={{
+        type: 'spring',
+        stiffness: 420,
+        damping: 30,
+        mass: 0.9,
+      }}
       style={style}
       onMouseDown={() => focusWindow(win.id)}
       className="mac-window absolute flex flex-col overflow-hidden bg-white/95 backdrop-blur-xl"
@@ -94,7 +105,7 @@ export default function Window({win, app}: {win: WindowState; app: string}) {
       <div
         onMouseDown={onTitleBarMouseDown}
         onDoubleClick={() => toggleMaximize(win.id)}
-        className="relative flex h-[38px] shrink-0 cursor-grab select-none items-center border-b border-black/[0.07] bg-[#f6f6f6]/95 px-3 active:cursor-grabbing"
+        className="relative flex h-[38px] shrink-0 cursor-grab select-none items-center border-b border-black/[0.07] bg-[#f6f6f6]/95 px-3 active:cursor-grabbing dark:border-white/10 dark:bg-[#2c2c30]/95"
       >
         {/* traffic lights */}
         <div className="traffic-group flex items-center gap-2">
@@ -138,13 +149,13 @@ export default function Window({win, app}: {win: WindowState; app: string}) {
 
         {/* centered title */}
         <div className="pointer-events-none absolute inset-x-0 flex justify-center">
-          <span className="truncate px-6 text-[13px] font-semibold text-black/70">
+          <span className="truncate px-6 text-[13px] font-semibold text-black/70 dark:text-white/70">
             {win.title}
           </span>
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto bg-white">
+      <div className="min-h-0 flex-1 overflow-auto bg-white dark:bg-[#232326]">
         <Comp />
       </div>
 
